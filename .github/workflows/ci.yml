@@ -1,0 +1,51 @@
+name: iStore Upload
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bin/packages/**'
+
+env:
+  SDK_NAME: openwrt-sdk-21.02.2-armvirt-64_gcc-8.4.0_musl.Linux-x86_64
+  SDK_URL: https://downloads.openwrt.org/releases/21.02.2/targets/armvirt/64/
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: iStore Upload
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 1
+
+      - name: Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo swapoff /swapfile || true
+          sudo rm -rf /swapfile /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install binutils bzip2 xzcat unzip git wget patch device-tree-compiler rsync
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo timedatectl set-timezone "$TZ"
+
+      - name: Download SDK
+        run: wget -O /tmp/${SDK_NAME}.tar.xz ${SDK_URL}${SDK_NAME}.tar.xz
+
+      - name: Unpack SDK
+        run: tar --strip-components=1 -xJf /tmp/${SDK_NAME}.tar.xz
+
+      - name: Index ipks
+        run: ./Index.sh
+
+      - name: Upload ipks
+        env:
+          RSYNC_PASSWORD: ${{ secrets.RSYNC_PASSWORD }}
+          REPO_DEST: ${{ secrets.RSYNC_DEST }}
+        run: ./Upload.sh
