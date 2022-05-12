@@ -1,4 +1,4 @@
-# istore-repo
+# istore-repo-test
 iStore的ipk仓库，存放已编译的ipk文件
 
 # PR指南
