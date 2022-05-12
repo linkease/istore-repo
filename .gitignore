@@ -1,0 +1,15 @@
+/COPYING
+/Config-build.in
+/Config.in
+/LICENSES
+/Makefile
+/README.SDK
+/build_dir
+/feeds.conf.default
+/include
+/package
+/prepare.mk
+/rules.mk
+/scripts
+/staging_dir
+/target
