@@ -49,3 +49,6 @@ jobs:
           RSYNC_PASSWORD: ${{ secrets.RSYNC_PASSWORD }}
           REPO_DEST: ${{ secrets.RSYNC_DEST }}
         run: ./Upload.sh
+
+      - name: New Pending
+        run: git push origin HEAD:pending
