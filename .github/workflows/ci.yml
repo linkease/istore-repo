@@ -35,11 +35,20 @@ jobs:
           sudo -E apt-get -qq clean
           sudo timedatectl set-timezone "$TZ"
 
+      - name: 'Restore SDK from cache'
+        id: sdk-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/.sdk
+          key: ${{ env.SDK_NAME }}
+
       - name: Download SDK
-        run: wget -O /tmp/${SDK_NAME}.tar.xz ${SDK_URL}${SDK_NAME}.tar.xz
+        run: |
+          [ -d "${{ github.workspace }}/.sdk" ] || mkdir -p "${{ github.workspace }}/.sdk"
+          [ -s ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz ] || wget -O ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz ${SDK_URL}${SDK_NAME}.tar.xz
 
       - name: Unpack SDK
-        run: tar --strip-components=1 -xJf /tmp/${SDK_NAME}.tar.xz
+        run: tar --strip-components=1 -xJf ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz
 
       - name: Index ipks
         run: ./Index.sh
