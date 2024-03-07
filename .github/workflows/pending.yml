@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
         with:
-          branch: main
+          ref: main
           fetch-depth: 1
 
       - name: Fetch pending
