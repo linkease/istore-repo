@@ -72,4 +72,4 @@ jobs:
           find bin/packages -type f | tee staging_dir/new.lst
 
       - name: Report
-        run: diff -au0 staging_dir/old.lst staging_dir/new.lst
+        run: diff -au1 staging_dir/old.lst staging_dir/new.lst
