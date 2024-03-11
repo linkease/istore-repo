@@ -28,7 +28,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo swapoff /swapfile || true
-          sudo rm -rf /swapfile /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo rm -rf /swapfile
           sudo -E apt-get -qq install binutils bzip2 xz-utils unzip git wget rsync
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
