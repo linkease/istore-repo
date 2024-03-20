@@ -11,7 +11,7 @@ env:
 
 jobs:
   others:
-    if: github.head_ref != 'pending'
+    if: github.event_name == 'pull_request' && github.head_ref != 'pending'
     runs-on: ubuntu-latest
     name: Reject
     steps:
@@ -21,7 +21,7 @@ jobs:
           exit 1
 
   pending:
-    if: github.head_ref == 'pending'
+    if: github.event_name != 'pull_request' || github.head_ref == 'pending'
     runs-on: ubuntu-latest
     name: iStore Pending
     steps:
@@ -33,9 +33,10 @@ jobs:
 
       - name: Fetch pending
         run: |
+          git remote set-branches origin main
           git remote set-branches --add origin pending
           git fetch
-          git merge-base --is-ancestor main origin/pending
+          git merge-base --is-ancestor main origin/pending || { echo "pending branch MUST rebase to main!" >&2; exit 1; }
 
       - name: Clone a workspace
         run: |
