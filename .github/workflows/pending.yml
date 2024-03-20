@@ -2,12 +2,26 @@ name: iStore Pending
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 env:
   TZ: Asia/Shanghai
 
 jobs:
+  others:
+    if: github.head_ref != 'pending'
+    runs-on: ubuntu-latest
+    name: Reject
+    steps:
+      - name: Fail
+        run: |
+          echo "Must PR to pending branch!" >&2
+          exit 1
+
   pending:
+    if: github.head_ref == 'pending'
     runs-on: ubuntu-latest
     name: iStore Pending
     steps:
@@ -26,7 +40,7 @@ jobs:
       - name: Clone a workspace
         run: |
           git clone . ../cloned
-          rm -f ../cloned/.git
+          rm -rf ../cloned/.git
           cp -a .git ../cloned/
 
       - name: Mkdirs
@@ -40,16 +54,28 @@ jobs:
       - name: List Commits
         run: |
           git log --reverse --pretty=format:'%H' origin/pending...main > staging_dir/commits
+          cat staging_dir/commits
+          [ -s staging_dir/commits ]
+          echo >>staging_dir/commits
 
-      - name: Purge and Merge 
+      - name: Git user
+        run: |
+          git config user.email "actions-bot@noreply.github.com"
+          git config user.name "Actions Bot"
+
+      - name: Purge and Merge
         run: |
           while read; do
             commit="$REPLY"
-            git show --pretty= --name-only --no-renames $commit | grep '\.ipk$' > staging_dir/files
+            [ -n "$commit" ] || continue
+            echo "pick $commit"
+            git show --pretty= --name-only --no-renames $commit | grep '\.ipk$' || true > staging_dir/files
+            echo >>staging_dir/files
             git cherry-pick $commit
             git -C ../cloned checkout $commit
             while read; do
               file="$REPLY"
+              [ -n "$file" ] || continue
               dir="`dirname $file`"
               rm -f "$file"
               [ -f "../cloned/$file" ] || continue
@@ -72,4 +98,9 @@ jobs:
           find bin/packages -type f | tee staging_dir/new.lst
 
       - name: Report
-        run: diff -au1 staging_dir/old.lst staging_dir/new.lst
+        run: diff -au1 staging_dir/old.lst staging_dir/new.lst || true
+
+      - name: Push
+        run: |
+          git push -f origin main:pending
+
