@@ -11,7 +11,7 @@ env:
 
 jobs:
   others:
-    if: github.event_name == 'pull_request' && github.head_ref != 'pending'
+    if: github.event_name == 'pull_request' && !(github.head_ref == 'pending' && github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name)
     runs-on: ubuntu-latest
     name: Reject
     steps:
@@ -21,7 +21,7 @@ jobs:
           exit 1
 
   pending:
-    if: github.event_name != 'pull_request' || github.head_ref == 'pending'
+    if: github.event_name != 'pull_request' || (github.head_ref == 'pending' && github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name)
     runs-on: ubuntu-latest
     name: iStore Pending
     steps:
