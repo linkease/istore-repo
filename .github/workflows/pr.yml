@@ -1,0 +1,68 @@
+name: iStore PR check
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
+    types: [checks_requested]
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  check:
+    if: |
+      github.event_name == 'merge_group' ||
+      ((github.event.action != 'edited' || github.event.changes.base.ref.from != github.event.pull_request.base.ref) 
+        && !(github.base_ref == 'main' && (github.head_ref == 'pending' || github.head_ref == 'ci/automerging') && github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name))
+    runs-on: ubuntu-latest
+    name: PR Validate
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Fail on PR to branch other than pending
+        if: github.event_name != 'merge_group' && github.base_ref != 'pending'
+        run: |
+          echo "Must PR to pending branch!" >&2
+          echo "::error title=PR Check failed::You MUST PR to pending branch!"
+          exit 1
+
+      - name: Checkout base on PR to pending
+        if: github.event_name != 'merge_group' && github.base_ref == 'pending'
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 1
+          path: 'base'
+
+      - name: Checkout head on PR to pending
+        if: github.event_name != 'merge_group' && github.base_ref == 'pending'
+        uses: actions/checkout@main
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          path: 'head'
+
+      - name: Check workflows changes on PR to pending
+        if: github.event_name != 'merge_group' && github.base_ref == 'pending'
+        run: |
+          [ -d base/.github/workflows ] && [ -d head/.github/workflows ]
+          [ -d base/repo ] && [ -d head/repo ]
+          rm -rf base/.github/workflows base/repo
+          cp -a head/.github/workflows base/.github/
+          cp -a head/repo base/
+          if git -C base diff --pretty= --name-only --no-renames | grep -qm1 '/'; then \
+            echo "Don't HACK my workflows!" >&2; \
+            echo "::error title=PR Check failed::Don't touch workflows!"; \
+            exit 1; \
+          else \
+            true; \
+          fi
+
+      - name: Check pass
+        run: |
+          echo "PASS"
+          true
+
