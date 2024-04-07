@@ -31,7 +31,6 @@ jobs:
           sudo timedatectl set-timezone "$TZ"
 
       - uses: actions/create-github-app-token@v1
-        if: env.CI_USE_PR == 'false'
         id: app-token
         with:
           app-id: ${{ vars.BOT_APP_ID }}
