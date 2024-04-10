@@ -65,7 +65,7 @@ jobs:
 
       - name: Save Current ipk list before
         run: |
-          find bin/packages -type f | tee staging_dir/old.lst
+          find bin/packages -type f | sort | tee staging_dir/old.lst
 
       - name: List Commits
         run: |
@@ -118,7 +118,7 @@ jobs:
 
       - name: Save Current ipk list after
         run: |
-          find bin/packages -type f | tee staging_dir/new.lst
+          find bin/packages -type f | sort | tee staging_dir/new.lst
 
       - name: Report
         run: diff -au1 staging_dir/old.lst staging_dir/new.lst | tee staging_dir/changes.diff || true
