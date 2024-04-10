@@ -85,24 +85,31 @@ jobs:
             commit="$REPLY"
             [ -n "$commit" ] || continue
             echo "pick $commit"
-            git show --pretty= --name-only --no-renames $commit | grep '^bin/.*\.ipk$' || true > staging_dir/files
+            git show --pretty= --name-only --no-renames $commit | grep '^bin/.*\.ipk$' > staging_dir/files || true
             echo >>staging_dir/files
+            echo "ipk changes:"
+            cat staging_dir/files
             git cherry-pick $commit
             git -C ../cloned checkout $commit
             while read; do
               file="$REPLY"
               [ -n "$file" ] || continue
               dir="`dirname $file`"
+              echo "rm $file"
               rm -f "$file"
               [ -f "../cloned/$file" ] || continue
               pkg=`tar -xOf "../cloned/$file" ./control.tar.gz | tar -xOz ./control | grep '^Package: ' | sed 's/^Package: \(.*\)$/\1/'`
+              echo "clean old $pkg"
               ls "$dir/$pkg"_*.ipk | while read; do
                 del="$REPLY"
+                echo "check $del pkg name is $pkg?"
                 pkg0=`tar -xOf "$del" ./control.tar.gz | tar -xOz ./control | grep '^Package: ' | sed 's/^Package: \(.*\)$/\1/'`
                 [ "$pkg" = "$pkg0" ] || continue
+                echo "rm $del"
                 rm -f "$del"
               done
               mkdir -p "$dir"
+              echo "cp new $file"
               cp -a "../cloned/$file" "$file"
             done < staging_dir/files
             git add bin
