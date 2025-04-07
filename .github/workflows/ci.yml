@@ -61,10 +61,12 @@ jobs:
         run: ./repo/Index.sh
 
       - name: Upload ipks
+        id: upload
         env:
           RSYNC_PASSWORD: ${{ secrets.RSYNC_PASSWORD }}
           REPO_DEST: ${{ secrets.RSYNC_DEST }}
         run: ./repo/Upload.sh
 
       - name: New Pending
+        if: ( steps.upload.conclusion == 'success' || steps.upload.conclusion == 'failure' ) && !cancelled()
         run: git push -f origin HEAD:pending
