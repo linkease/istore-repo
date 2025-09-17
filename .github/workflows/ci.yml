@@ -40,7 +40,10 @@ jobs:
         uses: actions/checkout@main
         with:
           token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 1
+          fetch-depth: 2
+
+      - name: New Pending
+        run: git push -f origin HEAD:pending
 
       - name: 'Restore SDK from cache'
         id: sdk-cache
@@ -67,6 +70,3 @@ jobs:
           REPO_DEST: ${{ secrets.RSYNC_DEST }}
         run: ./repo/Upload.sh
 
-      - name: New Pending
-        if: ( steps.upload.conclusion == 'success' || steps.upload.conclusion == 'failure' ) && !cancelled()
-        run: git push -f origin HEAD:pending
