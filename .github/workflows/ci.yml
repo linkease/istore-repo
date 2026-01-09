@@ -18,21 +18,32 @@ jobs:
     runs-on: ubuntu-latest
     name: iStore Upload
     steps:
-      - name: Checkout
-        uses: actions/checkout@main
-        with:
-          fetch-depth: 1
 
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo swapoff /swapfile || true
-          sudo rm -rf /swapfile /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo rm -rf /swapfile
           sudo -E apt-get -qq install binutils bzip2 xz-utils unzip git wget rsync
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
           sudo timedatectl set-timezone "$TZ"
+
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 2
+
+      - name: New Pending
+        run: git push -f origin HEAD:pending
 
       - name: 'Restore SDK from cache'
         id: sdk-cache
@@ -50,13 +61,12 @@ jobs:
         run: tar --strip-components=1 -xJf ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz
 
       - name: Index ipks
-        run: ./Index.sh
+        run: ./repo/Index.sh
 
       - name: Upload ipks
+        id: upload
         env:
           RSYNC_PASSWORD: ${{ secrets.RSYNC_PASSWORD }}
           REPO_DEST: ${{ secrets.RSYNC_DEST }}
-        run: ./Upload.sh
+        run: ./repo/Upload.sh
 
-      - name: New Pending
-        run: git push origin HEAD:pending
