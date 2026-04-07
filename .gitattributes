@@ -1,0 +1,2 @@
+# Ensure IPK files are treated as binary (no CRLF conversion, no encoding changes)
+*.ipk binary
