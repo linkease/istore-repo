@@ -22,4 +22,6 @@ $(curdir)/index: FORCE
 			{ echo ""; echo ""; } >> Packages;; \
 		esac; \
 		gzip -9nc Packages > Packages.gz; \
+		[ -s $(BUILD_KEY) ] || continue; \
+		$(STAGING_DIR_HOST)/bin/usign -S -m Packages -s $(BUILD_KEY); \
 	); done
