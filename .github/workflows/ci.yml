@@ -65,8 +65,8 @@ jobs:
         env:
           BUILD_KEY: ${{ secrets.BUILD_KEY }}
         run: |
-          echo "untrusted comment: istore key" > ${SDK_NAME}/key-build
-          echo "$BUILD_KEY" >> ${SDK_NAME}/key-build
+          echo "untrusted comment: istore key" > key-build
+          echo "$BUILD_KEY" >> key-build
 
       - name: Index ipks
         run: ./repo/Index.sh
