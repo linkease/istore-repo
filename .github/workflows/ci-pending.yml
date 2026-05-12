@@ -98,12 +98,13 @@ jobs:
               echo "rm $file"
               rm -f "$file"
               [ -f "../cloned/$file" ] || continue
-              pkg=`tar -xOf "../cloned/$file" ./control.tar.gz | tar -xOz ./control | grep '^Package: ' | sed 's/^Package: \(.*\)$/\1/'`
+              pkg=`{tar -xOf "../cloned/$file" ./control.tar.gz || tar -xOf "../cloned/$file" control.tar.gz} | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
+              [ -n "$pkg" ] || exit 1
               echo "clean old $pkg"
               ls "$dir/$pkg"_*.ipk | while read; do
                 del="$REPLY"
                 echo "check $del pkg name is $pkg?"
-                pkg0=`tar -xOf "$del" ./control.tar.gz | tar -xOz ./control | grep '^Package: ' | sed 's/^Package: \(.*\)$/\1/'`
+                pkg0=`{tar -xOf "$del" ./control.tar.gz || tar -xOf "$del" control.tar.gz} | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
                 [ "$pkg" = "$pkg0" ] || continue
                 echo "rm $del"
                 rm -f "$del"
