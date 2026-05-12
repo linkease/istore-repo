@@ -76,7 +76,7 @@ jobs:
           while read; do
             file="$REPLY"
             [ -n "$file" ] || continue
-            pkg=`{tar -xOf "base/$file" ./control.tar.gz || tar -xOf "base/$file" control.tar.gz} | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
+            pkg=`{ tar -xOf "base/$file" ./control.tar.gz || tar -xOf "base/$file" control.tar.gz; } | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
             [ -n "$pkg" ] || exit 1
           done < ipk.list
 
