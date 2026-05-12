@@ -53,13 +53,32 @@ jobs:
           rm -rf base/.github/workflows base/repo
           cp -a head/.github/workflows base/.github/
           cp -a head/repo base/
-          if git -C base diff --pretty= --name-only --no-renames | grep -qm1 '/'; then \
+          git -C base add repo .github/workflows
+          if git -C base diff --staged --pretty= --name-only --no-renames | grep -qm1 '/'; then \
             echo "Don't HACK my workflows!" >&2; \
             echo "::error title=PR Check failed::Don't touch workflows!"; \
             exit 1; \
           else \
             true; \
           fi
+          git -C base restore --staged .
+          rm -rf base/.github/workflows base/repo
+          git -C base reset --hard
+
+      - name: Validate ipks
+        if: github.event_name != 'merge_group' && github.base_ref == 'pending'
+        run: |
+          [ -d head/bin ]
+          cp -a head/bin base/
+          git -C base add bin
+          git -C base diff --staged --pretty= --name-only --no-renames | grep '^bin/.*\.ipk$' > ipk.list || true
+          echo >>ipk.list
+          while read; do
+            file="$REPLY"
+            [ -n "$file" ] || continue
+            pkg=`{tar -xOf "base/$file" ./control.tar.gz || tar -xOf "base/$file" control.tar.gz} | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
+            [ -n "$pkg" ] || exit 1
+          done < ipk.list
 
       - name: Check pass
         run: |
