@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'bin/packages/**'
+      - 'bin/**'
 
 env:
   SDK_NAME: openwrt-sdk-mini-25.12.2
@@ -68,10 +68,19 @@ jobs:
           echo "untrusted comment: istore key" > key-build
           echo "$BUILD_KEY" >> key-build
 
-      - name: Index ipks
+      - name: Write apk build key
+        if: env.BUILD_KEY_APK != ''
+        env:
+          BUILD_KEY_APK: ${{ secrets.BUILD_KEY_APK }}
+        run: |
+          echo "-----BEGIN EC PRIVATE KEY-----" > private-key.pem
+          echo "$BUILD_KEY_APK" >> private-key.pem
+          echo "-----END EC PRIVATE KEY-----" >> private-key.pem
+
+      - name: Index pkgs
         run: ./repo/Index.sh
 
-      - name: Upload ipks
+      - name: Upload pkgs
         id: upload
         env:
           RSYNC_PASSWORD: ${{ secrets.RSYNC_PASSWORD }}

@@ -12,6 +12,8 @@ env:
   MG_HEAD_BRANCH: pending
   CI_USE_PR: false
   CI_AUTO_BRANCH: ci/automerging
+  SDK_NAME: openwrt-sdk-mini-25.12.2
+  SDK_URL: https://github.com/linkease/istore-repo/releases/download/tools/
 
 jobs:
   pending:
@@ -19,6 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     name: iStore Pending CI
     steps:
+      - name: Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt-get -qq wget xz-utils jq
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo timedatectl set-timezone "$TZ"
+
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
@@ -59,13 +70,24 @@ jobs:
           rm -rf ../cloned/.git
           cp -a .git ../cloned/
 
-      - name: Mkdirs
-        run: |
-          mkdir staging_dir
+      - name: 'Restore SDK from cache'
+        id: sdk-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/.sdk
+          key: ${{ env.SDK_NAME }}
 
-      - name: Save Current ipk list before
+      - name: Download SDK
         run: |
-          find bin/packages -type f | sort | tee staging_dir/old.lst
+          [ -d "${{ github.workspace }}/.sdk" ] || mkdir -p "${{ github.workspace }}/.sdk"
+          [ -s ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz ] || wget -O ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz ${SDK_URL}${SDK_NAME}.tar.xz
+
+      - name: Unpack host tools from SDK
+        run: tar --strip-components=1 -xJf ${{ github.workspace }}/.sdk/${SDK_NAME}.tar.xz ${SDK_NAME}/staging_dir/host
+
+      - name: Save Current file list before
+        run: |
+          find bin -type f | sort | tee staging_dir/old.lst
 
       - name: List Commits
         run: |
@@ -85,9 +107,9 @@ jobs:
             commit="$REPLY"
             [ -n "$commit" ] || continue
             echo "pick $commit"
-            git show --pretty= --name-only --no-renames $commit | grep '^bin/.*\.ipk$' > staging_dir/files || true
+            git show --pretty= --name-only --no-renames $commit | grep -e '^bin/.*\.ipk$' -e '^bin/.*\.apk$' > staging_dir/files || true
             echo >>staging_dir/files
-            echo "ipk changes:"
+            echo "ipk/apk changes:"
             cat staging_dir/files
             git cherry-pick $commit
             git -C ../cloned checkout $commit
@@ -98,13 +120,13 @@ jobs:
               echo "rm $file"
               rm -f "$file"
               [ -f "../cloned/$file" ] || continue
-              pkg=`{ tar -xOf "../cloned/$file" ./control.tar.gz || tar -xOf "../cloned/$file" control.tar.gz; } | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
+              pkg=`./repo/pkgname.sh "../cloned/$file"`
               [ -n "$pkg" ] || exit 1
               echo "clean old $pkg"
-              ls "$dir/$pkg"_*.ipk | while read; do
+              ls "$dir/$pkg"_*.ipk "$dir/$pkg"-*.apk 2>/dev/null | while read; do
                 del="$REPLY"
                 echo "check $del pkg name is $pkg?"
-                pkg0=`{ tar -xOf "$del" ./control.tar.gz || tar -xOf "$del" control.tar.gz; } | tar -xOz ./control | grep '^Package: ' | head -1 | sed 's/^Package: \(.*\)$/\1/'`
+                pkg0=`./repo/pkgname.sh "$del"`
                 [ "$pkg" = "$pkg0" ] || continue
                 echo "rm $del"
                 rm -f "$del"
@@ -117,9 +139,9 @@ jobs:
             git commit --no-edit --amend
           done < staging_dir/commits
 
-      - name: Save Current ipk list after
+      - name: Save Current file list after
         run: |
-          find bin/packages -type f | sort | tee staging_dir/new.lst
+          find bin -type f | sort | tee staging_dir/new.lst
 
       - name: Report
         run: diff -au1 staging_dir/old.lst staging_dir/new.lst | tee staging_dir/changes.diff || true
