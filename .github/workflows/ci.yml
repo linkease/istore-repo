@@ -9,8 +9,8 @@ on:
       - 'bin/packages/**'
 
 env:
-  SDK_NAME: openwrt-sdk-21.02.2-armvirt-64_gcc-8.4.0_musl.Linux-x86_64
-  SDK_URL: https://downloads.openwrt.org/releases/21.02.2/targets/armvirt/64/
+  SDK_NAME: openwrt-sdk-mini-25.12.2
+  SDK_URL: https://github.com/linkease/istore-repo/releases/download/tools/
   TZ: Asia/Shanghai
 
 jobs:
