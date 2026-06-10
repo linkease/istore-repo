@@ -5,10 +5,13 @@
 /Makefile
 /README.SDK
 /build_dir
+/dl
 /feeds.conf.default
 /include
+/key-build
 /package
 /prepare.mk
+/private-key.pem
 /rules.mk
 /scripts
 /staging_dir
