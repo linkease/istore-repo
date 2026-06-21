@@ -44,6 +44,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
           path: 'head'
+          allow-unsafe-pr-checkout: true
 
       - name: Check workflows changes on PR to pending
         if: github.event_name != 'merge_group' && github.base_ref == 'pending'
