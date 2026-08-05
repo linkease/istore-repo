@@ -9,7 +9,7 @@ usage() {
     cat <<'USAGE'
 Usage: scripts/import-tmp-packages.sh [options]
 
-Import ipk packages from arm64.zip and x86_64.zip into bin/packages.
+Import ipk/apk packages from arm64.zip and x86_64.zip into bin/packages and bin/apks.
 
 Options:
   --source-dir DIR  Directory containing arm64.zip and x86_64.zip.
@@ -143,6 +143,14 @@ all_luci_dir="${tmpdir}/all_nas_luci"
 merge_luci_dir "${arm_dir}/ipk/nas_luci" "${all_luci_dir}" "arm64 luci all"
 merge_luci_dir "${x86_dir}/ipk/nas_luci" "${all_luci_dir}" "x86_64 luci all"
 
+all_apk_luci_dir="${tmpdir}/all_apk_nas_luci"
+merge_luci_dir "${arm_dir}/apk/nas_luci" "${all_apk_luci_dir}" "arm64 apk luci all"
+merge_luci_dir "${x86_dir}/apk/nas_luci" "${all_apk_luci_dir}" "x86_64 apk luci all"
+
 sync_dir "${all_luci_dir}" "${repo_root}/bin/packages/all/nas_luci" "luci all"
 sync_dir "${arm_dir}/ipk/nas" "${repo_root}/bin/packages/aarch64_cortex-a53/nas" "arm64 nas"
 sync_dir "${x86_dir}/ipk/nas" "${repo_root}/bin/packages/x86_64/nas" "x86_64 nas"
+
+sync_dir "${all_apk_luci_dir}" "${repo_root}/bin/apks/all/nas_luci" "apk luci all"
+sync_dir "${arm_dir}/apk/nas" "${repo_root}/bin/apks/aarch64_generic/nas" "arm64 apk nas"
+sync_dir "${x86_dir}/apk/nas" "${repo_root}/bin/apks/x86_64/nas" "x86_64 apk nas"
