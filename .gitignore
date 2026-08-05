@@ -13,6 +13,7 @@
 /prepare.mk
 /private-key.pem
 /rules.mk
-/scripts
+/scripts/*
+!/scripts/import-tmp-packages.sh
 /staging_dir
 /target
